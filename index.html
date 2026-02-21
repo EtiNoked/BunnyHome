@@ -574,16 +574,16 @@ function doStep(step) {
 }
 
 function saveProgress() {
-  try { localStorage.setItem('bh_save', JSON.stringify({ hi: G.hi, stars: G.stars, total: TOTAL_LV })); } catch(e) {}
+  try { localStorage.setItem('bh_save', JSON.stringify({ hi: G.hi, stars: G.stars })); } catch(e) {}
 }
 
 function doWin() {
-  var isLast = G.li === TOTAL_LV - 1;
-  if (isLast) TOTAL_LV += 10;
-  if (G.li >= G.hi && G.li < TOTAL_LV - 1) G.hi = G.li + 1;
+  var oldTotal = TOTAL_LV;
+  if (G.li >= G.hi) G.hi = G.li + 1;
   G.stars[G.li] = 3;
+  TOTAL_LV = Math.ceil((G.hi + 1) / 10) * 10;
   saveProgress();
-  document.getElementById('mSub').textContent = isLast ? '30 new levels unlocked! 🗺️' : 'Bunny is home! 🏠🥕';
+  document.getElementById('mSub').textContent = TOTAL_LV > oldTotal ? '10 new levels unlocked! 🗺️' : 'Bunny is home! 🏠🥕';
   launchConfetti(); document.getElementById('winMod').style.display = 'flex';
 }
 function showFail(ico, t, s) {
@@ -613,7 +613,7 @@ window.addEventListener('DOMContentLoaded', function() {
   G.hi = 0; G.stars = {};
   try {
     var saved = JSON.parse(localStorage.getItem('bh_save') || 'null');
-    if (saved) { G.hi = saved.hi || 0; G.stars = saved.stars || {}; TOTAL_LV = saved.total || 10; }
+    if (saved) { G.hi = saved.hi || 0; G.stars = saved.stars || {}; TOTAL_LV = Math.ceil((G.hi + 1) / 10) * 10; }
   } catch(e) {}
   setTimeout(function() { for (var i = 0; i < 5; i++) getLv(i); }, 200);
   showHome();

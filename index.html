@@ -573,11 +573,16 @@ function doStep(step) {
   return 'ok';
 }
 
+function saveProgress() {
+  try { localStorage.setItem('bh_save', JSON.stringify({ hi: G.hi, stars: G.stars, total: TOTAL_LV })); } catch(e) {}
+}
+
 function doWin() {
   var isLast = G.li === TOTAL_LV - 1;
   if (isLast) TOTAL_LV += 30;
   if (G.li >= G.hi && G.li < TOTAL_LV - 1) G.hi = G.li + 1;
   G.stars[G.li] = 3;
+  saveProgress();
   document.getElementById('mSub').textContent = isLast ? '30 new levels unlocked! 🗺️' : 'Bunny is home! 🏠🥕';
   launchConfetti(); document.getElementById('winMod').style.display = 'flex';
 }
@@ -605,6 +610,10 @@ window.addEventListener('resize', function() { if (document.getElementById('game
 
 window.addEventListener('DOMContentLoaded', function() {
   G.hi = 0; G.stars = {};
+  try {
+    var saved = JSON.parse(localStorage.getItem('bh_save') || 'null');
+    if (saved) { G.hi = saved.hi || 0; G.stars = saved.stars || {}; TOTAL_LV = saved.total || 30; }
+  } catch(e) {}
   setTimeout(function() { for (var i = 0; i < 5; i++) getLv(i); }, 200);
   showHome();
   document.addEventListener('touchmove', function(e) {

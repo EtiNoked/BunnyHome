@@ -18,30 +18,27 @@ body{font-family:system-ui,sans-serif;color:var(--text);display:flex;justify-con
 .screen.active{display:flex;}
 
 /* HOME */
-#home{background:linear-gradient(160deg,#FFF0E8,#E6F8FF 55%,#F0E8FF);}
+#home{background:linear-gradient(180deg,#D4EDAA 0%,#E8F5C8 30%,#FFF8EE 100%);}
 .home-hdr{padding:16px 20px 10px;flex-shrink:0;display:flex;justify-content:space-between;align-items:center;}
 .home-title{font-size:26px;font-weight:900;}
 .home-title span{color:var(--coral);}
-.home-sub{font-size:11px;color:#9A7A6A;font-weight:600;margin-top:1px;}
-.home-scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:4px 0 32px;}
+.home-sub{font-size:11px;color:#7A8A5A;font-weight:600;margin-top:1px;}
 .chip{background:#fff;border-radius:10px;padding:4px 10px;font-size:12px;font-weight:700;box-shadow:var(--sh-sm);display:flex;align-items:center;gap:3px;}
 
-/* Snake road */
-.road-row{display:flex;justify-content:space-around;align-items:center;padding:4px 18px;position:relative;}
-.road-row::before{content:'';position:absolute;top:50%;left:10px;right:10px;height:22px;transform:translateY(-50%);background:rgba(200,170,120,.22);border-radius:11px;z-index:0;}
-.road-conn{height:24px;position:relative;margin:0 18px;}
-.road-conn::after{content:'';position:absolute;top:0;width:26px;height:100%;background:rgba(200,170,120,.22);border-radius:0 0 13px 13px;}
-.road-conn.rc-r::after{right:12px;}
-.road-conn.rc-l::after{left:12px;}
-.lv-node{width:52px;height:52px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;z-index:1;cursor:pointer;flex-shrink:0;box-shadow:var(--sh-sm);transition:transform .12s;border:3px solid transparent;user-select:none;}
-.lv-node:active{transform:scale(.88);}
+/* Map road */
+.map-scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;}
+.map-canvas{position:relative;width:100%;}
+.lv-node{position:absolute;width:58px;height:58px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;transform:translate(-50%,-50%);cursor:pointer;box-shadow:0 5px 0 rgba(0,0,0,.18),0 2px 8px rgba(0,0,0,.12);border:3.5px solid transparent;z-index:2;user-select:none;transition:transform .1s;}
+.lv-node:active{transform:translate(-50%,-50%) scale(.88);}
 .lv-node.done{background:#4CAF7C;border-color:#2E8A5A;color:#fff;}
-.lv-node.current{background:#FF8C70;border-color:#E05030;color:#fff;animation:nodePulse 1.4s ease-in-out infinite;}
-.lv-node.locked{background:#D8CCC8;border-color:#C0B4B0;color:#9A8880;cursor:default;}
-@keyframes nodePulse{0%,100%{box-shadow:0 0 0 0 rgba(255,140,112,.6);}50%{box-shadow:0 0 0 9px rgba(255,140,112,0);}}
-.lv-num{font-size:12px;font-weight:900;line-height:1;}
+.lv-node.current{background:var(--coral);border-color:var(--coral-dk);color:#fff;animation:nodePulse 1.4s ease-in-out infinite;}
+.lv-node.locked{background:#C8BEB8;border-color:#A89890;color:#786860;cursor:default;}
+.lv-node.locked:active{transform:translate(-50%,-50%);}
+@keyframes nodePulse{0%,100%{box-shadow:0 5px 0 rgba(180,50,20,.4),0 0 0 0 rgba(255,140,112,.6);}50%{box-shadow:0 5px 0 rgba(180,50,20,.4),0 0 0 11px rgba(255,140,112,0);}}
+.lv-num{font-size:14px;font-weight:900;line-height:1;}
 .lv-ico{font-size:20px;line-height:1;}
-.lv-stars{font-size:8px;line-height:1;margin-top:1px;}
+.lv-stars{font-size:8px;line-height:1;margin-top:2px;letter-spacing:1px;}
+.bunny-walker{position:absolute;font-size:26px;transform:translate(-50%,-50%);z-index:10;pointer-events:none;}
 
 /* GAME */
 #game{background:linear-gradient(170deg,#F2FCF5,#EDF6FF);}
@@ -124,7 +121,7 @@ body{font-family:system-ui,sans-serif;color:var(--text);display:flex;justify-con
       </div>
       <div class="chip">⭐ <span id="homeProg">0/30</span></div>
     </div>
-    <div class="home-scroll"><div id="roadWrap"></div></div>
+    <div class="map-scroll" id="mapScroll"><div class="map-canvas" id="mapCanvas"></div></div>
   </div>
 
   <div id="game" class="screen">
@@ -303,6 +300,7 @@ var DVEC = { up: [-1,0], dn: [1,0], lt: [0,-1], rt: [0,1], ne: [-1,1], nw: [-1,-
 
 // ── State ──
 var TOTAL_LV = 10;
+var NODE_STEP = 115, BOTTOM_PAD = 70, TOP_PAD = 130;
 var G = { li: 0, hi: 0, stars: {}, bp: [0,0], cr: {}, crSize: 0, qu: [], run: false, lim: 0 };
 
 function showHome() {
@@ -310,10 +308,13 @@ function showHome() {
   document.getElementById('home').classList.add('active');
   document.getElementById('game').classList.remove('active');
   buildRoad();
-  setTimeout(function() {
-    var el = document.getElementById('node-' + G.hi);
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }, 100);
+  var prev = G.prevHi;
+  G.prevHi = undefined;
+  if (prev !== undefined && prev < G.hi) {
+    setTimeout(function() { animateBunnyWalk(prev, G.hi); }, 150);
+  } else {
+    setTimeout(function() { scrollToNode(G.hi, false); }, 50);
+  }
 }
 
 function showGame() {
@@ -322,38 +323,102 @@ function showGame() {
 }
 
 // ── Road ──
+function nodeXY(i, W, totalH) {
+  return { x: Math.round((i % 2 === 0 ? 0.72 : 0.28) * W), y: totalH - BOTTOM_PAD - i * NODE_STEP };
+}
+
 function buildRoad() {
-  var wrap = document.getElementById('roadWrap');
-  wrap.innerHTML = '';
+  var canvas = document.getElementById('mapCanvas');
+  canvas.innerHTML = '';
   document.getElementById('homeProg').textContent = Object.keys(G.stars).length + '/' + TOTAL_LV;
-  for (var row = 0; row < TOTAL_LV / 5; row++) {
-    var rowDiv = document.createElement('div');
-    rowDiv.className = 'road-row';
-    var idx = [];
-    for (var i = 0; i < 5; i++) idx.push(row * 5 + i);
-    if (row % 2 !== 0) idx.reverse();
-    for (var k = 0; k < idx.length; k++) {
-      var li = idx[k];
-      if (li >= TOTAL_LV) continue;
-      var isDone = li < G.hi, isCur = li === G.hi, isLocked = li > G.hi;
-      var n = document.createElement('div');
-      n.id = 'node-' + li;
-      n.className = 'lv-node ' + (isDone ? 'done' : isCur ? 'current' : 'locked');
-      if (isDone) n.innerHTML = '<div class="lv-num">' + (li+1) + '</div><div class="lv-stars">⭐⭐⭐</div>';
-      else if (isCur) n.innerHTML = '<div class="lv-ico">🐰</div><div class="lv-num">' + (li+1) + '</div>';
-      else n.innerHTML = '<div class="lv-ico">🔒</div><div class="lv-num" style="font-size:10px">' + (li+1) + '</div>';
-      if (!isLocked) {
-        (function(lvIdx) { n.addEventListener('click', function() { playLevel(lvIdx); }); })(li);
-      }
-      rowDiv.appendChild(n);
-    }
-    wrap.appendChild(rowDiv);
-    if (row < 5) {
-      var conn = document.createElement('div');
-      conn.className = 'road-conn ' + (row % 2 === 0 ? 'rc-r' : 'rc-l');
-      wrap.appendChild(conn);
-    }
+  var W = canvas.parentElement.clientWidth || 390;
+  var totalH = TOTAL_LV * NODE_STEP + BOTTOM_PAD + TOP_PAD;
+  canvas.style.height = totalH + 'px';
+
+  var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:' + totalH + 'px;pointer-events:none;';
+
+  for (var i = 0; i < TOTAL_LV - 1; i++) {
+    var a = nodeXY(i, W, totalH), b = nodeXY(i + 1, W, totalH);
+    var midY = (a.y + b.y) / 2;
+    var pd = 'M'+a.x+','+a.y+' C'+a.x+','+midY+' '+b.x+','+midY+' '+b.x+','+b.y;
+    var isDoneSegment = i < G.hi - 1;
+
+    var shadow = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    shadow.setAttribute('d', pd); shadow.setAttribute('fill', 'none');
+    shadow.setAttribute('stroke', 'rgba(0,0,0,.10)'); shadow.setAttribute('stroke-width', '22');
+    shadow.setAttribute('stroke-linecap', 'round'); svg.appendChild(shadow);
+
+    var outer = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    outer.setAttribute('d', pd); outer.setAttribute('fill', 'none');
+    outer.setAttribute('stroke', isDoneSegment ? '#2E8A5A' : '#B89060');
+    outer.setAttribute('stroke-width', '20'); outer.setAttribute('stroke-linecap', 'round'); svg.appendChild(outer);
+
+    var inner = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    inner.setAttribute('d', pd); inner.setAttribute('fill', 'none');
+    inner.setAttribute('stroke', isDoneSegment ? '#5DC88A' : '#F0D8A8');
+    inner.setAttribute('stroke-width', '13'); inner.setAttribute('stroke-linecap', 'round'); svg.appendChild(inner);
+
+    var dash = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    dash.setAttribute('d', pd); dash.setAttribute('fill', 'none');
+    dash.setAttribute('stroke', isDoneSegment ? 'rgba(255,255,255,.35)' : 'rgba(255,255,255,.5)');
+    dash.setAttribute('stroke-width', '3'); dash.setAttribute('stroke-linecap', 'round');
+    dash.setAttribute('stroke-dasharray', '1 14'); svg.appendChild(dash);
   }
+  canvas.appendChild(svg);
+
+  for (var i = 0; i < TOTAL_LV; i++) {
+    var pos = nodeXY(i, W, totalH);
+    var isDone = i < G.hi, isCur = i === G.hi, isLocked = i > G.hi;
+    var n = document.createElement('div');
+    n.id = 'node-' + i;
+    n.className = 'lv-node ' + (isDone ? 'done' : isCur ? 'current' : 'locked');
+    n.style.left = pos.x + 'px'; n.style.top = pos.y + 'px';
+    n.innerHTML = isDone
+      ? '<div class="lv-num">' + (i+1) + '</div><div class="lv-stars">⭐⭐⭐</div>'
+      : isCur
+        ? '<div class="lv-ico">🐰</div><div class="lv-num">' + (i+1) + '</div>'
+        : '<div class="lv-ico">🔒</div><div class="lv-num">' + (i+1) + '</div>';
+    if (!isLocked) (function(li) { n.addEventListener('click', function() { playLevel(li); }); })(i);
+    canvas.appendChild(n);
+  }
+}
+
+function scrollToNode(idx, smooth) {
+  var scroll = document.getElementById('mapScroll');
+  var canvas = document.getElementById('mapCanvas');
+  var W = canvas.clientWidth || 390;
+  var totalH = parseInt(canvas.style.height) || 0;
+  var top = Math.max(0, nodeXY(idx, W, totalH).y - scroll.clientHeight * 0.62);
+  if (smooth) scroll.scrollTo({ top: top, behavior: 'smooth' });
+  else scroll.scrollTop = top;
+}
+
+function animateBunnyWalk(fromIdx, toIdx) {
+  var canvas = document.getElementById('mapCanvas');
+  var W = canvas.clientWidth || 390;
+  var totalH = parseInt(canvas.style.height) || 0;
+  var p0 = nodeXY(fromIdx, W, totalH), p1 = nodeXY(toIdx, W, totalH);
+  var midY = (p0.y + p1.y) / 2;
+  var toNode = document.getElementById('node-' + toIdx);
+  var toIco = toNode && toNode.querySelector('.lv-ico');
+  if (toIco) toIco.style.visibility = 'hidden';
+  var walker = document.createElement('div');
+  walker.className = 'bunny-walker'; walker.textContent = '🐰';
+  walker.style.left = p0.x + 'px'; walker.style.top = p0.y + 'px';
+  canvas.appendChild(walker);
+  scrollToNode(fromIdx, false);
+  var start = null, dur = 850;
+  requestAnimationFrame(function step(ts) {
+    if (!start) start = ts;
+    var t = Math.min((ts - start) / dur, 1);
+    var et = t < .5 ? 2*t*t : -1 + (4 - 2*t) * t;
+    var mt = 1 - et;
+    walker.style.left = (mt*mt*mt*p0.x + 3*mt*mt*et*p0.x + 3*mt*et*et*p1.x + et*et*et*p1.x) + 'px';
+    walker.style.top  = (mt*mt*mt*p0.y + 3*mt*mt*et*midY + 3*mt*et*et*midY + et*et*et*p1.y) + 'px';
+    if (t < 1) { requestAnimationFrame(step); }
+    else { walker.remove(); if (toIco) toIco.style.visibility = ''; scrollToNode(toIdx, true); }
+  });
 }
 
 function playLevel(li) { G.li = li; loadLevel(); showGame(); }
@@ -579,6 +644,7 @@ function saveProgress() {
 
 function doWin() {
   var oldTotal = TOTAL_LV;
+  G.prevHi = G.hi;
   if (G.li >= G.hi) G.hi = G.li + 1;
   G.stars[G.li] = 3;
   TOTAL_LV = Math.ceil((G.hi + 1) / 10) * 10;
@@ -618,7 +684,7 @@ window.addEventListener('DOMContentLoaded', function() {
   setTimeout(function() { for (var i = 0; i < 5; i++) getLv(i); }, 200);
   showHome();
   document.addEventListener('touchmove', function(e) {
-    if (e.target.closest('.home-scroll,.queue-wrap,.palette-row')) return;
+    if (e.target.closest('.map-scroll,.queue-wrap,.palette-row')) return;
     if (!touchDragActive) e.preventDefault();
   }, { passive: false });
 });

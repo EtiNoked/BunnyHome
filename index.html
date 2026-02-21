@@ -298,8 +298,12 @@ var TOKS = [
 ];
 var DVEC = { up: [-1,0], dn: [1,0], lt: [0,-1], rt: [0,1], ne: [-1,1], nw: [-1,-1], se: [1,1], sw: [1,-1] };
 
+// ── Level config ──
+var INITIAL_LV = 10;   // levels shown on first launch
+var LV_BATCH   = 10;   // levels added each time the last one is beaten
+
 // ── State ──
-var TOTAL_LV = 10;
+var TOTAL_LV = INITIAL_LV;
 var NODE_STEP = 115, BOTTOM_PAD = 70, TOP_PAD = 130;
 var G = { li: 0, hi: 0, stars: {}, bp: [0,0], cr: {}, crSize: 0, qu: [], run: false, lim: 0 };
 
@@ -647,9 +651,9 @@ function doWin() {
   G.prevHi = G.hi;
   if (G.li >= G.hi) G.hi = G.li + 1;
   G.stars[G.li] = 3;
-  TOTAL_LV = Math.ceil((G.hi + 1) / 10) * 10;
+  TOTAL_LV = Math.ceil((G.hi + 1) / LV_BATCH) * LV_BATCH;
   saveProgress();
-  document.getElementById('mSub').textContent = TOTAL_LV > oldTotal ? '10 new levels unlocked! 🗺️' : 'Bunny is home! 🏠🥕';
+  document.getElementById('mSub').textContent = TOTAL_LV > oldTotal ? LV_BATCH + ' new levels unlocked! 🗺️' : 'Bunny is home! 🏠🥕';
   launchConfetti(); document.getElementById('winMod').style.display = 'flex';
 }
 function showFail(ico, t, s) {
@@ -679,7 +683,7 @@ window.addEventListener('DOMContentLoaded', function() {
   G.hi = 0; G.stars = {};
   try {
     var saved = JSON.parse(localStorage.getItem('bh_save') || 'null');
-    if (saved) { G.hi = saved.hi || 0; G.stars = saved.stars || {}; TOTAL_LV = Math.ceil((G.hi + 1) / 10) * 10; }
+    if (saved) { G.hi = saved.hi || 0; G.stars = saved.stars || {}; TOTAL_LV = Math.ceil((G.hi + 1) / LV_BATCH) * LV_BATCH; }
   } catch(e) {}
   setTimeout(function() { for (var i = 0; i < 5; i++) getLv(i); }, 200);
   showHome();

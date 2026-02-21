@@ -29,8 +29,8 @@ Open `index.html` in any modern browser — no build step, no dependencies.
 
 ## 🗺️ Levels
 
-- Starts with **30 levels** on a winding snake-road map
-- Beat the last level to **unlock 30 more** — repeats indefinitely
+- Starts with **10 levels** on a winding snake-road map
+- Beat the last level to **unlock 10 more** — repeats indefinitely
 - **Levels 1–2** — 3×3 grid
 - **Levels 3–5** — 5×5 grid
 - **Levels 6+** — 8×8 grid with increasing carrots and holes
@@ -41,7 +41,7 @@ Open `index.html` in any modern browser — no build step, no dependencies.
 
 - Complete a level to unlock the next one
 - Earn ⭐⭐⭐ on every win
-- Finish the last level to expand the map with 30 new challenges
+- Finish the last level to expand the map with 10 new challenges
 - Progress is tracked on the map screen
 
 ## 🛠️ Tech

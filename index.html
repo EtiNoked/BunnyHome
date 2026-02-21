@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>🐰 Bunny Home</title>
+<link rel="manifest" href="manifest.json">
+<!-- iOS PWA -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Bunny Home">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<!-- Theme -->
+<meta name="theme-color" content="#FF8C70">
 <style>
 :root{
   --coral:#FF8C70;--coral-dk:#E05030;--green:#4CAF7C;
@@ -692,6 +700,13 @@ window.addEventListener('DOMContentLoaded', function() {
     if (!touchDragActive) e.preventDefault();
   }, { passive: false });
 });
+</script>
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('./sw.js');
+  });
+}
 </script>
 </body>
 </html>

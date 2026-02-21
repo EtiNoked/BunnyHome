@@ -302,6 +302,7 @@ var TOKS = [
 var DVEC = { up: [-1,0], dn: [1,0], lt: [0,-1], rt: [0,1], ne: [-1,1], nw: [-1,-1], se: [1,1], sw: [1,-1] };
 
 // ── State ──
+var TOTAL_LV = 30;
 var G = { li: 0, hi: 0, stars: {}, bp: [0,0], cr: {}, crSize: 0, qu: [], run: false, lim: 0 };
 
 function showHome() {
@@ -324,8 +325,8 @@ function showGame() {
 function buildRoad() {
   var wrap = document.getElementById('roadWrap');
   wrap.innerHTML = '';
-  document.getElementById('homeProg').textContent = Object.keys(G.stars).length + '/30';
-  for (var row = 0; row < 6; row++) {
+  document.getElementById('homeProg').textContent = Object.keys(G.stars).length + '/' + TOTAL_LV;
+  for (var row = 0; row < TOTAL_LV / 5; row++) {
     var rowDiv = document.createElement('div');
     rowDiv.className = 'road-row';
     var idx = [];
@@ -333,7 +334,7 @@ function buildRoad() {
     if (row % 2 !== 0) idx.reverse();
     for (var k = 0; k < idx.length; k++) {
       var li = idx[k];
-      if (li > 29) continue;
+      if (li >= TOTAL_LV) continue;
       var isDone = li < G.hi, isCur = li === G.hi, isLocked = li > G.hi;
       var n = document.createElement('div');
       n.id = 'node-' + li;
@@ -572,10 +573,17 @@ function doStep(step) {
   return 'ok';
 }
 
+function saveProgress() {
+  try { localStorage.setItem('bh_save', JSON.stringify({ hi: G.hi, stars: G.stars, total: TOTAL_LV })); } catch(e) {}
+}
+
 function doWin() {
-  if (G.li >= G.hi && G.li < 29) G.hi = G.li + 1;
+  var isLast = G.li === TOTAL_LV - 1;
+  if (isLast) TOTAL_LV += 30;
+  if (G.li >= G.hi && G.li < TOTAL_LV - 1) G.hi = G.li + 1;
   G.stars[G.li] = 3;
-  document.getElementById('mSub').textContent = 'Bunny is home! 🏠🥕';
+  saveProgress();
+  document.getElementById('mSub').textContent = isLast ? '30 new levels unlocked! 🗺️' : 'Bunny is home! 🏠🥕';
   launchConfetti(); document.getElementById('winMod').style.display = 'flex';
 }
 function showFail(ico, t, s) {
@@ -585,7 +593,7 @@ function showFail(ico, t, s) {
   document.getElementById('failMod').style.display = 'flex';
 }
 function hideM() { document.getElementById('winMod').style.display = 'none'; document.getElementById('failMod').style.display = 'none'; }
-function nextLevel() { hideM(); if (G.li < 29) { G.li++; loadLevel(); } else showHome(); }
+function nextLevel() { hideM(); if (G.li < TOTAL_LV - 1) { G.li++; loadLevel(); } else showHome(); }
 function retryLevel() { hideM(); loadLevel(); }
 
 function launchConfetti() {
@@ -602,6 +610,10 @@ window.addEventListener('resize', function() { if (document.getElementById('game
 
 window.addEventListener('DOMContentLoaded', function() {
   G.hi = 0; G.stars = {};
+  try {
+    var saved = JSON.parse(localStorage.getItem('bh_save') || 'null');
+    if (saved) { G.hi = saved.hi || 0; G.stars = saved.stars || {}; TOTAL_LV = saved.total || 30; }
+  } catch(e) {}
   setTimeout(function() { for (var i = 0; i < 5; i++) getLv(i); }, 200);
   showHome();
   document.addEventListener('touchmove', function(e) {

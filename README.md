@@ -29,10 +29,11 @@ Open `index.html` in any modern browser — no build step, no dependencies.
 
 ## 🗺️ Levels
 
-- 30 levels arranged on a winding snake-road map
+- Starts with **30 levels** on a winding snake-road map
+- Beat the last level to **unlock 30 more** — repeats indefinitely
 - **Levels 1–2** — 3×3 grid
 - **Levels 3–5** — 5×5 grid
-- **Levels 6–30** — 8×8 grid
+- **Levels 6+** — 8×8 grid with increasing carrots and holes
 - Levels are procedurally generated with a seeded RNG — same level always produces the same board
 - Every level is validated by BFS to guarantee it's solvable within the step limit
 
@@ -40,6 +41,7 @@ Open `index.html` in any modern browser — no build step, no dependencies.
 
 - Complete a level to unlock the next one
 - Earn ⭐⭐⭐ on every win
+- Finish the last level to expand the map with 30 new challenges
 - Progress is tracked on the map screen
 
 ## 🛠️ Tech
@@ -48,6 +50,7 @@ Open `index.html` in any modern browser — no build step, no dependencies.
 - BFS pathfinding for solvability validation
 - Seeded RNG for deterministic level generation
 - Drag & drop (mouse and touch) for sequence building
+- Dynamic level expansion — no hard cap on total levels
 
 ## 📁 Structure
 

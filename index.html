@@ -607,6 +607,7 @@ function launchConfetti() {
 }
 
 window.addEventListener('resize', function() { if (document.getElementById('game').classList.contains('active')) sizeBoard(); });
+window.addEventListener('beforeunload', saveProgress);
 
 window.addEventListener('DOMContentLoaded', function() {
   G.hi = 0; G.stars = {};
